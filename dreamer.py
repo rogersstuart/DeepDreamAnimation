@@ -9,7 +9,7 @@ import errno
 import subprocess
 #import natsort
 
-from cStringIO import StringIO
+from io import StringIO
 import numpy as np
 import scipy.ndimage as nd
 import PIL.Image
@@ -56,7 +56,7 @@ def deepdream(net, base_img, iter_n=10, octave_n=4, step_size=1.5, octave_scale=
               end='inception_4c/output', clip=True, **step_params):
     # prepare base images for all octaves
     octaves = [preprocess(net, base_img)]
-    for i in xrange(octave_n - 1):
+    for i in range(octave_n - 1):
         octaves.append(nd.zoom(octaves[-1], (1, 1.0 / octave_scale, 1.0 / octave_scale), order=1))
 
     src = net.blobs['data']
@@ -70,14 +70,14 @@ def deepdream(net, base_img, iter_n=10, octave_n=4, step_size=1.5, octave_scale=
 
         src.reshape(1, 3, h, w)  # resize the network's input image size
         src.data[0] = octave_base + detail
-        for i in xrange(iter_n):
+        for i in range(iter_n):
             make_step(net, end=end, step_size=step_size, jitter=jitter, clip=clip, **step_params)
 
             # visualization
             vis = deprocess(net, src.data[0])
             if not clip:  # adjust image contrast if clipping is disabled
                 vis = vis * (255.0 / np.percentile(vis, 99.98))
-            print octave, i, end, vis.shape
+            print(octave, i, end, vis.shape)
 
         # extract details produced on the current octave
         detail = src.data[0] - octave_base
@@ -200,15 +200,15 @@ def main(inputdir, outputdir, preview, octaves, octave_scale, iterations, jitter
 
     def getStats(saveframe, var_counter, vids, difference):
         # Stats
-        print '***************************************'
-        print 'Saving Image As: ' + saveframe
-        print 'Frame ' + str(var_counter) + ' of ' + str(len(vids))
-        print 'Frame Time: ' + str(difference) + 's'
+        print('***************************************')
+        print('Saving Image As: ' + saveframe)
+        print('Frame ' + str(var_counter) + ' of ' + str(len(vids)))
+        print('Frame Time: ' + str(difference) + 's')
         timeleft = difference * (len(vids) - var_counter)
         m, s = divmod(timeleft, 60)
         h, m = divmod(m, 60)
-        print 'Estimated Total Time Remaining: ' + str(timeleft) + 's (' + "%d:%02d:%02d" % (h, m, s) + ')'
-        print '***************************************'
+        print('Estimated Total Time Remaining: ' + str(timeleft) + 's (' + "%d:%02d:%02d" % (h, m, s) + ')')
+        print('***************************************')
 
     if flow is 1:
         import cv2
@@ -226,7 +226,7 @@ def main(inputdir, outputdir, preview, octaves, octave_scale, iterations, jitter
                 previousGrayImg = grayImg
 
                 newframe = inputdir + '/' + vids[v + 1]
-                print 'Processing: ' + newframe
+                print('Processing: ' + newframe)
                 endparam = layers[var_counter % len(layers)]
 
                 img = np.float32(PIL.Image.open(newframe))
@@ -251,7 +251,7 @@ def main(inputdir, outputdir, preview, octaves, octave_scale, iterations, jitter
                 PIL.Image.fromarray(np.uint8(hallu)).save(saveframe)
                 var_counter += 1
             else:
-                print 'Finished processing all frames'
+                print('Finished processing all frames')
     else:
         # process anim frames
         for v in range(len(vids)):
@@ -260,7 +260,7 @@ def main(inputdir, outputdir, preview, octaves, octave_scale, iterations, jitter
                 h, w = frame.shape[:2]
                 s = 0.05  # scale coefficient  
 
-                print 'Processing: ' + inputdir + '/' + vid
+                print('Processing: ' + inputdir + '/' + vid)
 
                 # setup
                 now = time.time()
@@ -290,18 +290,18 @@ def main(inputdir, outputdir, preview, octaves, octave_scale, iterations, jitter
                 frame = np.float32(frame)
                 var_counter += 1
             else:
-                print 'Finished processing all frames'
+                print('Finished processing all frames')
 
 
 def extractVideo(inputdir, outputdir):
-    print subprocess.Popen('ffmpeg -i ' + inputdir + ' -f image2 ' + outputdir + '/image-%06d.png', shell=True,
-                           stdout=subprocess.PIPE).stdout.read()
+    print(subprocess.Popen('ffmpeg -i ' + inputdir + ' -f image2 ' + outputdir + '/image-%06d.png', shell=True,
+                           stdout=subprocess.PIPE).stdout.read())
 
 
 def createVideo(inputdir, outputdir, framerate):
-    print subprocess.Popen('ffmpeg -r ' + str(
+    print(subprocess.Popen('ffmpeg -r ' + str(
         framerate) + ' -f image2 -i "' + inputdir + '/frame_%6d.png" -c:v libx264 -crf 20 -pix_fmt yuv420p -tune fastdecode -tune zerolatency -profile:v baseline ' + outputdir,
-                           shell=True, stdout=subprocess.PIPE).stdout.read()
+                           shell=True, stdout=subprocess.PIPE).stdout.read())
 
 
 if __name__ == "__main__":
