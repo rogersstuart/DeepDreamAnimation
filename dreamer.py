@@ -1,6 +1,11 @@
 #!/usr/bin/python
 __author__ = 'Samim.io'
 
+caffe_root = '/content/caffe/'  # this file should be run from {caffe_root}/examples (otherwise change this line)
+
+import sys
+sys.path.insert(0, caffe_root + 'python')
+
 # Imports
 import argparse
 import time
@@ -18,6 +23,8 @@ import caffe
 
 # a couple of utility functions for converting to and from Caffe's input image layout
 def preprocess(net, img):
+    if img.shape[-1] == 4:
+        img = img[..., :3]
     return np.float32(np.rollaxis(img, 2)[::-1]) - net.transformer.mean['data']
 
 
@@ -133,7 +140,7 @@ def main(inputdir, outputdir, preview, octaves, octave_scale, iterations, jitter
 
     # Loading DNN model
     model_name = 'bvlc_googlenet'
-    model_path = '../../caffe/models/' + model_name + '/'
+    model_path = '/content/caffe/models/' + model_name + '/'
     net_fn = model_path + 'deploy.prototxt'
     param_fn = model_path + 'bvlc_googlenet.caffemodel'
 
@@ -237,6 +244,10 @@ def main(inputdir, outputdir, preview, octaves, octave_scale, iterations, jitter
                 flow[:, :, 0] += np.arange(w)
                 flow[:, :, 1] += np.arange(h)[:, np.newaxis]
                 halludiff = hallu - previousImg
+
+                if previousImg.shape[-1] == 4:
+                  previousImg = previousImg[..., :3]
+
                 halludiff = cv2.remap(halludiff, flow, None, cv2.INTER_LINEAR)
                 hallu = img + halludiff
 
